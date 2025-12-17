@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  gems      Int      @default(1600)
+  createdAt DateTime @default(now())
+  lastPull  DateTime?
+  
+  cards SessionCard[]
+  pulls PullHistory[]
+  
+  @@map("sessions")
+}
+
+model Card {
+  id              String   @id
+  cardNumber      String   @unique
+  name            String
+  rarity          String
+  color           String
+  type            String
+  level           Int?
+  dp              Int?
+  playCost        Int?
+  digivolveCost   String?
+  form            String?
+  attribute       String?
+  typeTraits      String[]
+  mainEffect      String?
+  inheritedEffect String?
+  artist          String?
+  imageUrl        String
+  
+  inCollections SessionCard[]
+  inPulls       PullHistory[]
+  
+  @@map("cards")
+}
+
+model SessionCard {
+  id        String   @id @default(uuid())
+  sessionId String
+  cardId    String
+  quantity  Int      @default(1)
+  firstPull DateTime @default(now())
+  lastPull  DateTime @default(now())
+  
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  card    Card    @relation(fields: [cardId], references: [id])
+  
+  @@unique([sessionId, cardId])
+  @@map("session_cards")
+}
+
+model PullHistory {
+  id        String   @id @default(uuid())
+  sessionId String
+  cardId    String
+  pullType  String
+  timestamp DateTime @default(now())
+  
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  card    Card    @relation(fields: [cardId], references: [id])
+  
+  @@map("pull_history")
+}
